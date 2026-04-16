@@ -42,7 +42,7 @@ The platform is composed of four primary, containerized subsystems:
 ### Setup Steps
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/yourusername/vpp-grid-balancer.git](https://github.com/yourusername/vpp-grid-balancer.git)
+   git clone https://github.com/mtepenner/vpp-grid-balancer.git
    cd vpp-grid-balancer
    ```
 2. For a local development setup (1 dispatcher, 5-10 batteries), use Docker Compose:
