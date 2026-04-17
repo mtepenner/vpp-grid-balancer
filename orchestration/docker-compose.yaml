@@ -1,0 +1,128 @@
+version: "3.9"
+
+networks:
+  vpp_network:
+    driver: bridge
+
+services:
+  # ── MQTT Broker ─────────────────────────────────────────────────────────────
+  vernemq:
+    build:
+      context: ../mqtt_broker
+    container_name: vernemq
+    ports:
+      - "1883:1883"   # MQTT TCP
+      - "8083:8080"   # MQTT WebSocket (host 8083 avoids clash with dispatch_engine)
+    networks:
+      - vpp_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "vmq-admin", "cluster", "show"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Dispatch Engine ─────────────────────────────────────────────────────────
+  dispatch_engine:
+    build:
+      context: ../dispatch_engine
+    container_name: dispatch_engine
+    ports:
+      - "8080:8080"
+    networks:
+      - vpp_network
+    depends_on:
+      vernemq:
+        condition: service_healthy
+    environment:
+      - MQTT_BROKER=tcp://vernemq:1883
+    restart: unless-stopped
+
+  # ── Battery Edge Clients (5 instances for local dev) ────────────────────────
+  battery_1:
+    build:
+      context: ../battery_edge_client
+    container_name: battery_1
+    networks:
+      - vpp_network
+    depends_on:
+      - vernemq
+    environment:
+      - BATTERY_ID=battery-001
+      - MQTT_HOST=vernemq
+      - BATTERY_CAPACITY_KW=7.5
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  battery_2:
+    build:
+      context: ../battery_edge_client
+    container_name: battery_2
+    networks:
+      - vpp_network
+    depends_on:
+      - vernemq
+    environment:
+      - BATTERY_ID=battery-002
+      - MQTT_HOST=vernemq
+      - BATTERY_CAPACITY_KW=10.0
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  battery_3:
+    build:
+      context: ../battery_edge_client
+    container_name: battery_3
+    networks:
+      - vpp_network
+    depends_on:
+      - vernemq
+    environment:
+      - BATTERY_ID=battery-003
+      - MQTT_HOST=vernemq
+      - BATTERY_CAPACITY_KW=5.0
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  battery_4:
+    build:
+      context: ../battery_edge_client
+    container_name: battery_4
+    networks:
+      - vpp_network
+    depends_on:
+      - vernemq
+    environment:
+      - BATTERY_ID=battery-004
+      - MQTT_HOST=vernemq
+      - BATTERY_CAPACITY_KW=12.0
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  battery_5:
+    build:
+      context: ../battery_edge_client
+    container_name: battery_5
+    networks:
+      - vpp_network
+    depends_on:
+      - vernemq
+    environment:
+      - BATTERY_ID=battery-005
+      - MQTT_HOST=vernemq
+      - BATTERY_CAPACITY_KW=8.0
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  # ── Dashboard ────────────────────────────────────────────────────────────────
+  vpp_dashboard:
+    build:
+      context: ../vpp_dashboard
+    container_name: vpp_dashboard
+    ports:
+      - "3000:80"
+    networks:
+      - vpp_network
+    depends_on:
+      - dispatch_engine
+    restart: unless-stopped

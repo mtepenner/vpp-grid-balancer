@@ -1,0 +1,8 @@
+module github.com/mtepenner/vpp-grid-balancer/dispatch_engine
+
+go 1.21
+
+require (
+	github.com/eclipse/paho.mqtt.golang v1.4.3
+	github.com/gorilla/websocket v1.5.1
+)
