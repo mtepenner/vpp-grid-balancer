@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -45,10 +46,10 @@ type TelemetryPayload struct {
 
 // DispatchCommand is sent to selected batteries.
 type DispatchCommand struct {
-	BatteryID  string  `json:"battery_id"`
-	TargetKW   float64 `json:"target_kw"`
-	Action     string  `json:"action"` // "discharge" | "idle"
-	EventID    string  `json:"event_id"`
+	BatteryID string  `json:"battery_id"`
+	TargetKW  float64 `json:"target_kw"`
+	Action    string  `json:"action"` // "discharge" | "idle"
+	EventID   string  `json:"event_id"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -88,6 +89,11 @@ func main() {
 	registry := inventory.NewRegistry()
 	wsHub := newHub()
 
+	brokerURL := os.Getenv("MQTT_BROKER")
+	if brokerURL == "" {
+		brokerURL = mqttBrokerURL
+	}
+
 	// Pre-populate registry with 5 000 simulated batteries for scale testing.
 	for i := 0; i < 5000; i++ {
 		registry.Register(inventory.Battery{
@@ -100,7 +106,7 @@ func main() {
 
 	// MQTT client setup.
 	mqttOpts := mqtt.NewClientOptions().
-		AddBroker(mqttBrokerURL).
+		AddBroker(brokerURL).
 		SetClientID("dispatch-engine").
 		SetConnectRetry(true).
 		SetConnectRetryInterval(5 * time.Second).

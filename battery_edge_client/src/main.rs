@@ -16,10 +16,11 @@ use battery_sim::physics::BatteryState;
 
 /// Command received from the dispatch engine.
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 struct DispatchCommand {
     battery_id: String,
     target_kw: f64,
-    action: String, // "discharge" | "idle"
+    action: String, // "discharge" | "charge" | "idle"
     event_id: String,
 }
 
@@ -113,6 +114,13 @@ async fn main() {
                                 info!(
                                     "[{battery_id}] discharging {delivered:.2} kW (event {})",
                                     cmd.event_id
+                                );
+                            }
+                            "charge" => {
+                                guard.charge(cmd.target_kw, 1.0);
+                                info!(
+                                    "[{battery_id}] charging {:.2} kW (event {})",
+                                    cmd.target_kw, cmd.event_id
                                 );
                             }
                             "idle" => guard.update_physics(1.0),
